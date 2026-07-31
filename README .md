@@ -1,6 +1,6 @@
 # Cybersecurity Portfolio
 
-Live site: [yourusername.github.io](https://yourusername.github.io)
+Live site: [swetha0175.github.io](https://yourusername.github.io)
 
 A single-page portfolio built to showcase my skills, hands-on projects, and certifications for recruiters and hiring teams — in place of a static PDF resume. Designed around a terminal/SOC-dashboard aesthetic to reflect a security-focused background.
 
