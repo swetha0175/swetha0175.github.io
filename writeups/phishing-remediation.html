@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>True-Positive Phishing Email Analysis & Remediation — Alex Rivera</title>
+<title>True-Positive Phishing Email Analysis & Remediation — Swetha Ganesh</title>
 <meta name="description" content="Writeup: investigation and remediation of a confirmed phishing incident.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -180,11 +180,12 @@
     background: var(--accent);
     flex-shrink: 0;
   }
-  .w-section p { color: var(--text-dim); font-size: 15px; margin-bottom: 12px; }
+  .w-section p { color: var(--text-dim); font-size: 15px; margin-bottom: 12px; text-align: justify; }
   .w-section ul { padding-left: 20px; color: var(--text-dim); font-size: 15px; }
   .w-section li { margin-bottom: 8px; line-height: 1.6; }
   .w-section li::marker { color: var(--accent); }
-  .w-section strong { color: var(--text); font-weight: 600; }
+  /*.w-section strong { color: var(--text); font-weight: 600; }*/
+  .w-section strong { color: var(--text-dim); font-weight: 700; }
 
   .callout {
     background: var(--bg-panel);
@@ -230,6 +231,27 @@
   }
   .timeline-step p { margin-bottom: 0; }
 
+  .result-tag {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--accent);
+  font-weight: 600;
+  }
+
+  .tools-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  }
+
+  .tools-label {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--accent);
+  font-weight: 600;
+  }
+
   footer.page-footer {
     border-top: 1px solid var(--border);
     padding: 30px 0 50px;
@@ -256,14 +278,14 @@
       <span></span><span></span><span></span>
     </button>
     <nav class="nav-links" id="navLinks">
-      <a href="../index.html#home">home</a>
-      <a href="../index.html#about">about</a>
-      <a href="../index.html#skills">skills</a>
-      <a href="../index.html#projects">projects</a>
-      <a href="../index.html#certs">certs</a>
-      <a href="../index.html#experience">experience</a>
-      <a href="../index.html#education">education</a>
-      <a href="../index.html#contact">contact</a>
+      <a href="../index.html#home">Home</a>
+      <a href="../index.html#about">About</a>
+      <a href="../index.html#skills">Skills</a>
+      <a href="../index.html#projects">Projects</a>
+      <a href="../index.html#certifications">Certifications</a>
+      <a href="../index.html#experience">Experience</a>
+      <a href="../index.html#education">Education</a>
+      <a href="../index.html#contact">Contact</a>
     </nav>
   </div>
 </header>
@@ -271,17 +293,18 @@
 <div class="wrap">
   <div class="writeup-header">
     <div class="writeup-eyebrow">Incident writeup</div>
-    <h1 class="writeup-title">True-Positive Phishing Email Analysis &amp; Remediation</h1>
+    <h1 class="writeup-title">SOC Incident Investigation & Response &amp; Remediation</h1>
     <div class="writeup-meta">
       <span><strong>Role:</strong> SOC Analyst</span>
       <span><strong>Severity:</strong> <span class="severity-badge">High</span></span>
-      <span><strong>Outcome:</strong> Contained &amp; remediated</span>
+      <span><strong>Outcome:</strong> Contained &amp; Remediated</span>
     </div>
     <div class="stack-tags">
+      <span>Splunk SOAR</span>
       <span>Microsoft Defender XDR</span>
+      <span>Phishing</span>
       <span>Email Security</span>
       <span>Incident Remediation</span>
-      <span>Active Directory</span>
     </div>
   </div>
 
@@ -290,26 +313,25 @@
     <div class="w-section">
       <h2>Overview</h2>
       <p>
-        [1–2 sentences setting the scene: e.g. "A phishing email impersonating an internal IT
-        notification was reported by an end user and flagged for investigation. The email
-        contained a malicious link designed to harvest credentials."]
+        A phishing email impersonating an internal employee was sent to a member of the HR team, requesting that their salary payment details
+         be changed to a different bank account. The email included an authentic signature format that is typically only known 
+         internally, suggesting the sender had some familiarity with the organization's email signature format. The email was reported by the 
+         HR employee who received it and was flagged for investigation as a suspected financial gain.
       </p>
       <p>
         This writeup covers the investigation process, remediation actions taken, and the
-        outcome — with identifying details generalized to protect confidentiality.
+        outcome, with identifying details generalized to protect confidentiality.
       </p>
     </div>
 
     <div class="w-section">
       <h2>Detection</h2>
       <p>
-        [How the incident surfaced — e.g. "Flagged via user report through the phishing
-        report button" or "Detected by an automated mail-flow rule in Microsoft Defender
-        XDR that identified suspicious sender behavior."]
+        This incident was flagged via user report through the phishing
+        report button in outlook.
       </p>
       <div class="callout">
-        <strong>Indicator:</strong> [e.g. "Sender domain closely mimicked a legitimate vendor
-        domain using a single-character substitution (typosquatting)."]
+        <strong>Indicator:</strong> The sender's email address used a "gmail[.]com" domain with a string of random characters, rather than the organization's standard internal email format.
       </div>
     </div>
 
@@ -317,32 +339,52 @@
       <h2>Investigation</h2>
       <p>Steps taken to confirm this was a true positive rather than a false alarm:</p>
       <ul>
-        <li>[e.g. Reviewed email headers to verify sender authenticity (SPF/DKIM/DMARC results)]</li>
-        <li>[e.g. Checked the embedded URL/domain reputation against threat intelligence sources]</li>
-        <li>[e.g. Identified all recipients who received the same email across the organization]</li>
-        <li>[e.g. Checked sign-in logs for any recipients who may have already clicked the link or entered credentials]</li>
+        <li>Verified the sender domain's legitimacy.
+            <br>
+            <span class="result-tag">Result:</span>
+            <strong>Email sender domain was a gmail[.]com, further investigation was required to confirm authenticity of the email sender.</strong>
+        </li>
+        <li>Contacted the employee whose signature appeared in the email to confirm whether the Gmail address belonged to them.
+            <br>
+            <span class="result-tag">Result:</span>
+            <strong>Investigation confirmed it was not their personal email address.</strong>
+        </li>
+        <li>Reviewed email logs in Microsoft Defender to identify any other employees who had received an email from the same sender address, in order to determine the full scope of affected recipients.
+           <br>
+           <span class="result-tag">Result:</span>
+           <strong>Only 1 recipient received the email.</strong>
+        </li>
       </ul>
+      <br>
+      <div class="tools-row">
+         <span class="tools-label">Tools:</span>
+         <div class="stack-tags">
+            <span>Splunk SOAR</span>
+            <span>Microsoft Defender (Explorer)</span>
+            <span>Abnormal AI</span>
+         </div>
+      </div>
     </div>
 
     <div class="w-section">
       <h2>Remediation</h2>
-      <p>Once confirmed as a true positive, the following containment and remediation actions were taken:</p>
+      <p>After confirming that the gmail address was unrelated to the internal employee, it was categorized as a <b>true-positive incident</b> and the following containment and remediation actions were taken:</p>
       <div class="timeline-steps">
         <div class="timeline-step">
           <div class="step-label">Step 1 — Email removal</div>
-          <p>Deleted the malicious email from every affected mailbox across the organization to prevent further engagement.</p>
+          <p>Deleted the malicious email from the employees mailbox to prevent further engagement.</p>
         </div>
         <div class="timeline-step">
-          <div class="step-label">Step 2 — Domain/URL blocking</div>
-          <p>Blocked the malicious sender domain and embedded URL at the email gateway/security platform to prevent recurrence.</p>
+          <div class="step-label">Step 2 — Blocking Email Sender</div>
+          <p>Blocked the malicious email sender in Microsoft Defender Tenant Allow/Block List to prevent recurrence.</p>
         </div>
         <div class="timeline-step">
-          <div class="step-label">Step 3 — Credential reset</div>
-          <p>Reset passwords for any users identified as having interacted with the malicious link, out of precaution.</p>
+          <div class="step-label">Step 3 — Inform Employee</div>
+          <p>Communicated the findings to the affected employee to ensure awareness of the incident, encouraging greater vigilance around their finances going forward.</p>
         </div>
         <div class="timeline-step">
-          <div class="step-label">Step 4 — Monitoring</div>
-          <p>Monitored affected accounts for a period following remediation to confirm no further suspicious activity occurred.</p>
+          <div class="step-label">Step 4 — Improve Detection</div>
+          <p>After closing the ticket, reported the email to the organization's automated email security platform to ensure similar future attacks are automatically blocked by the system.</p>
         </div>
       </div>
     </div>
@@ -350,18 +392,16 @@
     <div class="w-section">
       <h2>Outcome</h2>
       <p>
-        [Summarize the result — e.g. "The incident was fully contained with no confirmed
-        credential compromise. Remediation was completed within [X] of detection, and no
-        further phishing attempts using the same infrastructure were observed."]
+        The incident was fully contained with no confirmed fianacial compromise. Remediation was completed within 10 minutes of detection, and no
+        further phishing attempts using the same infrastructure were observed.
       </p>
     </div>
 
     <div class="w-section">
       <h2>Lessons learned</h2>
       <p>
-        [Optional but valuable — shows reflection/growth. e.g. "This incident reinforced the
-        importance of checking sender authentication results early in triage, as it
-        significantly speeds up confirming true positives versus false alarms."]
+        This incident reinforced the importance of checking sender email authenticity results early in triage, as it
+        significantly speeds up confirming true positives versus false alarms.
       </p>
     </div>
 
@@ -369,7 +409,7 @@
 
   <footer class="page-footer">
     <a class="back-link" href="../index.html#projects">Back to portfolio</a>
-    <span class="site-name">alexrivera.github.io</span>
+    <span class="site-name">swetha0175.github.io</span>
   </footer>
 </div>
 
