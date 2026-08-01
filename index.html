@@ -336,6 +336,24 @@
   }
 
   /* ---------- Projects ---------- */
+  /* ===== Project group labels =====
+   Used to visually separate Security projects from Technical projects
+   in the Projects section. "primary" = blue accent (leads first),
+   "secondary" = muted grey (Technical Projects group) */
+
+  .project-group-label {
+    font-family: var(--mono);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 32px 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .project-group-label.primary { color: var(--accent); }
+  .project-group-label.secondary { color: var(--text-dim); }
+  .project-group-label:first-of-type { margin-top: 0; }
   .project-card {
     background: var(--bg-panel);
     border: 1px solid var(--border);
@@ -504,7 +522,7 @@
       <a href="#about">About</a>
       <a href="#skills">Skills</a>
       <a href="#projects">Projects</a>
-      <a href="#certs">Certifications</a>
+      <a href="#certifications">Certifications</a>
       <a href="#experience">Experience</a>
       <a href="#education">Education</a>
       <a href="#contact">Contact</a>
@@ -625,6 +643,8 @@
   <div class="wrap">
     <div class="section-label">ls ./projects</div>
     <h2 class="section-title">Projects &amp; Writeups</h2>
+    <!-- Group 1: Security-focused projects — leads first, blue accent label -->
+    <div class="project-group-label primary">Cybersecurity</div>
 
         <div class="project-card">
       <div class="project-head">
@@ -665,7 +685,8 @@
       <div class="project-stack"><span>Splunk SOAR</span><span>Python</span><span>Workflow Automation</span><span>Incident Response</span></div>
       <div class="project-link"><a href="writeups/soar_automation_dev.html" target="_blank" rel="noopener noreferrer">→ Read the writeup</a></div>
     </div>
-
+    <!-- Group 2: Supporting technical/dev projects — secondary, grey label -->
+    <div class="project-group-label secondary">Technical Projects — Python &amp; AI/ML</div>
     <div class="project-card">
       <div class="project-head">
         <div class="project-title">	AI-Powered Facial Recognition Attendance System (FRAS)</div>
@@ -707,7 +728,7 @@
   </div>
 </section>
 
-<section id="certs">
+<section id="certifications">
   <div class="wrap">
     <div class="section-label">cat certifications.log</div>
     <h2 class="section-title">Certifications</h2>
