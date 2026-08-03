@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>True-Positive Phishing Email Analysis & Remediation — Alex Rivera</title>
-<meta name="description" content="Writeup: investigation and remediation of a confirmed phishing incident.">
+<title>AI-Powered Facial Recognition Attendance System (FRAS) — Swetha Ganesh</title>
+<meta name="description" content="Writeup: a real-time facial recognition attendance system built using Python, OpenCV, and a CNN model.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -38,7 +38,7 @@
 
   .wrap { max-width: 760px; margin: 0 auto; padding: 0 24px; }
 
-  /* ---------- Back nav ---------- */
+  /* ---------- Nav ---------- */
   header.nav {
     position: sticky;
     top: 0; left: 0; right: 0;
@@ -54,6 +54,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    position: relative;
   }
   .back-link {
     font-family: var(--mono);
@@ -62,7 +63,63 @@
   }
   .back-link:hover { color: var(--accent); }
   .back-link::before { content: "← "; }
-  .nav-prompt { font-family: var(--mono); font-size: 12px; color: var(--text-dim); }
+
+  .nav-toggle {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    padding: 0;
+  }
+  .nav-toggle span {
+    display: block;
+    width: 16px;
+    height: 2px;
+    margin: 0 auto;
+    background: var(--text);
+    transition: transform .2s ease, opacity .2s ease;
+  }
+  .nav-toggle.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .nav-toggle.open span:nth-child(2) { opacity: 0; }
+  .nav-toggle.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+  .nav-links {
+    position: absolute;
+    top: calc(100% + 1px);
+    right: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-family: var(--mono);
+    font-size: 13px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px;
+    min-width: 170px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.45);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-6px);
+    transition: opacity .15s ease, transform .15s ease, visibility .15s;
+  }
+  .nav-links.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+  .nav-links a {
+    color: var(--text-dim);
+    padding: 8px 10px;
+    border-radius: 5px;
+  }
+  .nav-links a:hover { color: var(--accent); background: var(--bg-panel-raised); text-decoration: none; }
 
   /* ---------- Header block ---------- */
   .writeup-header { padding: 56px 0 32px; border-bottom: 1px solid var(--border); }
@@ -102,6 +159,8 @@
     border-radius: 4px;
     padding: 3px 8px;
   }
+  .tools-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .tools-label { font-family: var(--mono); font-size: 12px; color: var(--accent); font-weight: 600; }
 
   /* ---------- Body ---------- */
   article { padding: 40px 0 30px; }
@@ -122,11 +181,17 @@
     background: var(--accent);
     flex-shrink: 0;
   }
-  .w-section p { color: var(--text-dim); font-size: 15px; margin-bottom: 12px; }
-  .w-section ul { padding-left: 20px; color: var(--text-dim); font-size: 15px; }
+  .w-section p { color: var(--text-dim); font-size: 15px; margin-bottom: 12px; text-align: justify;}
+  .w-section ul { padding-left: 20px; color: var(--text-dim); font-size: 15px; text-align: justify;}
   .w-section li { margin-bottom: 8px; line-height: 1.6; }
   .w-section li::marker { color: var(--accent); }
-  .w-section strong { color: var(--text); font-weight: 600; }
+  .w-section strong { color: var(--text-dim); font-weight: 700; }
+  .result-tag {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    font-weight: 600;
+  }
 
   .callout {
     background: var(--bg-panel);
@@ -138,39 +203,57 @@
     color: var(--text-dim);
     margin: 16px 0;
   }
-  .callout strong { color: var(--accent); }
 
-  .severity-badge {
-    display: inline-block;
-    font-family: var(--mono);
-    font-size: 11px;
-    padding: 3px 10px;
-    border-radius: 4px;
-    text-transform: uppercase;
-    background: rgba(229,72,77,0.15);
-    color: var(--red);
-    border: 1px solid rgba(229,72,77,0.3);
+  .callout strong { color: var(--accent);}
+
+  /* Mainly used for the display of the FRAS Main System Image*/
+  .callout1 {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 6px;
+    padding: 16px 20px;
+    font-size: 14px;
+    color: var(--text-dim);
+    margin: 16px 0;
   }
 
-  .timeline-steps { border-left: 2px solid var(--border); padding-left: 22px; margin-top: 16px; }
-  .timeline-step { position: relative; padding-bottom: 22px; }
-  .timeline-step:last-child { padding-bottom: 0; }
-  .timeline-step::before {
-    content: "";
-    position: absolute;
-    left: -27px;
-    top: 4px;
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--accent);
+  .callout1 strong { color: var(--accent); display: block; margin-bottom: 7px;}
+
+  /* Mainly used for the questions (changing to blue color)*/
+  .callout2 { 
+    font-size: 14px;
+    color: var(--text-dim);
   }
-  .timeline-step .step-label {
+
+  .callout2 strong { color: var(--accent); display: block;}
+
+  .impact-stat {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin: 18px 0 6px;
+  }
+  .impact-stat-item {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    flex: 1;
+    min-width: 160px;
+  }
+  .impact-stat-item .num {
     font-family: var(--mono);
-    font-size: 12px;
+    font-size: 24px;
+    font-weight: 700;
     color: var(--accent);
+    display: block;
     margin-bottom: 4px;
   }
-  .timeline-step p { margin-bottom: 0; }
+  .impact-stat-item .label {
+    font-size: 12.5px;
+    color: var(--text-dim);
+  }
 
   footer.page-footer {
     border-top: 1px solid var(--border);
@@ -194,24 +277,41 @@
 <header class="nav">
   <div class="nav-inner">
     <a class="back-link" href="../index.html#projects">Back to portfolio</a>
-    <div class="nav-prompt">writeup/phishing-remediation</div>
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="navLinks">
+      <span></span><span></span><span></span>
+    </button>
+    <nav class="nav-links" id="navLinks">
+      <a href="../index.html#home">Home</a>
+      <a href="../index.html#about">About</a>
+      <a href="../index.html#skills">Skills</a>
+      <a href="../index.html#projects">Projects</a>
+      <a href="../index.html#certifications">Certifications</a>
+      <a href="../index.html#experience">Experience</a>
+      <a href="../index.html#education">Education</a>
+      <a href="../index.html#contact">Contact</a>
+    </nav>
   </div>
 </header>
 
 <div class="wrap">
   <div class="writeup-header">
-    <div class="writeup-eyebrow">Incident writeup</div>
-    <h1 class="writeup-title">True-Positive Phishing Email Analysis &amp; Remediation</h1>
+    <div class="writeup-eyebrow">AI Project</div>
+    <h1 class="writeup-title">AI-Powered Facial Recognition Attendance System (FRAS)</h1>
     <div class="writeup-meta">
-      <span><strong>Role:</strong> SOC Analyst</span>
-      <span><strong>Severity:</strong> <span class="severity-badge">High</span></span>
-      <span><strong>Outcome:</strong> Contained &amp; remediated</span>
+      <span><strong>Type:</strong> Python / AI &amp; ML</span>
+      <span><strong>Testing:</strong> 20+ facial images</span>
+      <span><strong>Accuracy:</strong> 99%+</span>
     </div>
-    <div class="stack-tags">
-      <span>Microsoft Defender XDR</span>
-      <span>Email Security</span>
-      <span>Incident Remediation</span>
-      <span>Active Directory</span>
+    <div class="tools-row">
+      <span class="tools-label">Tools:</span>
+      <div class="stack-tags">
+        <span>Pycharm</span>
+        <span>Python</span>
+        <span>Facial Recognition</span>
+        <span>CNN</span>
+        <span>MySQL</span>
+        <span>Skill Building</span>
+      </div>
     </div>
   </div>
 
@@ -220,78 +320,97 @@
     <div class="w-section">
       <h2>Overview</h2>
       <p>
-        [1–2 sentences setting the scene: e.g. "A phishing email impersonating an internal IT
-        notification was reported by an end user and flagged for investigation. The email
-        contained a malicious link designed to harvest credentials."]
+        For my final-year project in my Cybersecurity degree program, I developed a real-time facial recognition attendance system (FRAS) using AI and 
+        machine learning which automates attendance logging by identifying individuals live via webcam input rather than relying on manual sign-in.
       </p>
       <p>
-        This writeup covers the investigation process, remediation actions taken, and the
-        outcome — with identifying details generalized to protect confidentiality.
+        This writeup covers the system's design, key technical decisions, the testing process
+        used to validate accuracy and inclusivity, and the documentation created to support
+        long-term maintainability.
       </p>
     </div>
 
     <div class="w-section">
-      <h2>Detection</h2>
-      <p>
-        [How the incident surfaced — e.g. "Flagged via user report through the phishing
-        report button" or "Detected by an automated mail-flow rule in Microsoft Defender
-        XDR that identified suspicious sender behavior."]
-      </p>
-      <div class="callout">
-        <strong>Indicator:</strong> [e.g. "Sender domain closely mimicked a legitimate vendor
-        domain using a single-character substitution (typosquatting)."]
+      <h2>System Design</h2>
+      <div class="callout1">
+        <strong> Main FRAS System:</strong> 
+        <img src="C:\Users\sweth\OneDrive\Desktop\Swetha_Cybersecurity_Portfolio\writeups\System Design.png" alt="Screenshot of the Main FRAS System" width="670" height="500">
       </div>
-    </div>
-
-    <div class="w-section">
-      <h2>Investigation</h2>
-      <p>Steps taken to confirm this was a true positive rather than a false alarm:</p>
       <ul>
-        <li>[e.g. Reviewed email headers to verify sender authenticity (SPF/DKIM/DMARC results)]</li>
-        <li>[e.g. Checked the embedded URL/domain reputation against threat intelligence sources]</li>
-        <li>[e.g. Identified all recipients who received the same email across the organization]</li>
-        <li>[e.g. Checked sign-in logs for any recipients who may have already clicked the link or entered credentials]</li>
+        <li>Developed the Facial Registration System (FRS) for the main Facial Recognition Attendance System (FRAS), allowing users to register their facial profiles before accessing the attendance platform.</li>
+        <li>Developed a facial recognition attendance system (FRAS) using Python Programming and Machine Learning, achieving 99%+ accuracy in face detection.</li>
+        <li>Built using OpenCV for real-time face detection and a Convolutional Neural Network (CNN) model for facial recognition and classification.</li>
+        <li>Programmed backend functionality using Python programming, enabling fully automated attendance data logging to a MySQL database.</li>
       </ul>
     </div>
 
     <div class="w-section">
-      <h2>Remediation</h2>
-      <p>Once confirmed as a true positive, the following containment and remediation actions were taken:</p>
-      <div class="timeline-steps">
-        <div class="timeline-step">
-          <div class="step-label">Step 1 — Email removal</div>
-          <p>Deleted the malicious email from every affected mailbox across the organization to prevent further engagement.</p>
+      <h2>Technical Decisions &amp; Challenges</h2>
+      <div class="callout2">
+        <strong>Why did I choose CNN-based model for the FRAS?</strong>
+      </div>
+      <p>
+        [Explain 1-2 key decisions or challenges — e.g. "Chose a CNN-based approach over
+        simpler methods like Haar cascades for its stronger performance in classification
+        tasks, particularly under varied lighting and angles." or describe a specific problem
+        you solved, such as reducing false positives, handling multiple faces in frame, or
+        balancing detection speed against accuracy.]
+      </p>
+      <div class="callout">
+        <strong>Challenge:</strong> [e.g. "Initial testing showed reduced accuracy under low-light
+        conditions. Addressed this by ___ (e.g. adjusting preprocessing/image normalization,
+        expanding the training dataset, tuning detection thresholds)."]
+      </div>
+    </div>
+
+    <div class="w-section">
+      <h2>Testing &amp; Validation</h2>
+      <p>
+        Tested the system across 50+ diverse facial images to validate accuracy and ensure the
+        model performed reliably across different faces, rather than being biased toward a
+        narrow dataset.
+      </p>
+      <div class="callout">
+        <strong>Result:</strong> The system achieved 95%+ accuracy in face detection across the test set, while maintaining consistent performance across a diverse range of facial images.
+      </div>
+    </div>
+
+    <div class="w-section">
+      <h2>Documentation</h2>
+      <p>
+        Authored full documentation covering the system's design, methodology, usage, and
+        setup — supporting easy onboarding for anyone reviewing the project and long-term
+        maintainability of the codebase.
+      </p>
+    </div>
+
+    <div class="w-section">
+      <h2>Impact</h2>
+      <div class="impact-stat">
+        <div class="impact-stat-item">
+          <span class="num">95%+</span>
+          <span class="label">Face detection accuracy</span>
         </div>
-        <div class="timeline-step">
-          <div class="step-label">Step 2 — Domain/URL blocking</div>
-          <p>Blocked the malicious sender domain and embedded URL at the email gateway/security platform to prevent recurrence.</p>
+        <div class="impact-stat-item">
+          <span class="num">50+</span>
+          <span class="label">Diverse facial images tested</span>
         </div>
-        <div class="timeline-step">
-          <div class="step-label">Step 3 — Credential reset</div>
-          <p>Reset passwords for any users identified as having interacted with the malicious link, out of precaution.</p>
-        </div>
-        <div class="timeline-step">
-          <div class="step-label">Step 4 — Monitoring</div>
-          <p>Monitored affected accounts for a period following remediation to confirm no further suspicious activity occurred.</p>
+        <div class="impact-stat-item">
+          <span class="num">100%</span>
+          <span class="label">Automated attendance logging</span>
         </div>
       </div>
     </div>
 
     <div class="w-section">
-      <h2>Outcome</h2>
+      <h2>Lessons Learned</h2>
       <p>
-        [Summarize the result — e.g. "The incident was fully contained with no confirmed
-        credential compromise. Remediation was completed within [X] of detection, and no
-        further phishing attempts using the same infrastructure were observed."]
-      </p>
-    </div>
-
-    <div class="w-section">
-      <h2>Lessons learned</h2>
-      <p>
-        [Optional but valuable — shows reflection/growth. e.g. "This incident reinforced the
-        importance of checking sender authentication results early in triage, as it
-        significantly speeds up confirming true positives versus false alarms."]
+        This project strengthened my practical experience applying Python and machine learning
+        to a real-world problem, from model integration through to testing for robustness and
+        inclusivity — skills that carry directly into detection engineering and automation work
+        within security operations. It also gave me firsthand appreciation for the privacy
+        considerations around biometric data, which parallels the identity and access
+        management principles central to security work.
       </p>
     </div>
 
@@ -299,9 +418,40 @@
 
   <footer class="page-footer">
     <a class="back-link" href="../index.html#projects">Back to portfolio</a>
-    <span class="site-name">alexrivera.github.io</span>
+    <span class="site-name">swetha0175.github.io</span>
   </footer>
 </div>
 
+<script>
+  const navToggle = document.getElementById('navToggle');
+  const navLinks = document.getElementById('navLinks');
+
+  function closeMenu() {
+    navToggle.classList.remove('open');
+    navLinks.classList.remove('open');
+    navToggle.setAttribute('aria-expanded', 'false');
+  }
+
+  navToggle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isOpen = navLinks.classList.toggle('open');
+    navToggle.classList.toggle('open', isOpen);
+    navToggle.setAttribute('aria-expanded', String(isOpen));
+  });
+
+  navLinks.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', closeMenu);
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!navLinks.contains(e.target) && !navToggle.contains(e.target)) {
+      closeMenu();
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeMenu();
+  });
+</script>
 </body>
 </html>
