@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI-Powered Facial Recognition Attendance System (FRAS) — Swetha Ganesh</title>
+<meta name="description" content="Writeup: a real-time facial recognition attendance system built using Python, OpenCV, and a CNN model.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D1117;
+    --bg-panel: #131A22;
+    --bg-panel-raised: #182029;
+    --border: #23303B;
+    --text: #DCE3EA;
+    --text-dim: #7E8B98;
+    --accent: #4C9FE8;
+    --accent-dim: #1F4E78;
+    --cyan: #4FD1C5;
+    --red: #E5484D;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Inter', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    line-height: 1.6;
+  }
+  a { color: var(--cyan); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  ::selection { background: var(--accent-dim); color: var(--text); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .wrap { max-width: 760px; margin: 0 auto; padding: 0 24px; }
+
+  /* ---------- Nav ---------- */
+  header.nav {
+    position: sticky;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    background: rgba(13, 17, 23, 0.9);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 14px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+  }
+  .back-link {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+  .back-link:hover { color: var(--accent); }
+  .back-link::before { content: "← "; }
+
+  .nav-toggle {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    padding: 0;
+  }
+  .nav-toggle span {
+    display: block;
+    width: 16px;
+    height: 2px;
+    margin: 0 auto;
+    background: var(--text);
+    transition: transform .2s ease, opacity .2s ease;
+  }
+  .nav-toggle.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .nav-toggle.open span:nth-child(2) { opacity: 0; }
+  .nav-toggle.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+  .nav-links {
+    position: absolute;
+    top: calc(100% + 1px);
+    right: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-family: var(--mono);
+    font-size: 13px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px;
+    min-width: 170px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.45);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-6px);
+    transition: opacity .15s ease, transform .15s ease, visibility .15s;
+  }
+  .nav-links.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+  .nav-links a {
+    color: var(--text-dim);
+    padding: 8px 10px;
+    border-radius: 5px;
+  }
+  .nav-links a:hover { color: var(--accent); background: var(--bg-panel-raised); text-decoration: none; }
+
+  /* ---------- Header block ---------- */
+  .writeup-header { padding: 56px 0 32px; border-bottom: 1px solid var(--border); }
+  .writeup-eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 14px;
+  }
+  .writeup-eyebrow::before { content: "$ "; color: var(--text-dim); }
+  .writeup-title {
+    font-size: clamp(24px, 4vw, 34px);
+    font-weight: 700;
+    margin-bottom: 16px;
+    line-height: 1.25;
+  }
+  .writeup-meta {
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: var(--text-dim);
+    margin-bottom: 20px;
+  }
+  .writeup-meta span strong { color: var(--text); font-weight: 600; }
+
+  .stack-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+  .stack-tags span {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text);
+    background: var(--bg-panel-raised);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 3px 8px;
+  }
+  .tools-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .tools-label { font-family: var(--mono); font-size: 12px; color: var(--accent); font-weight: 600; }
+
+  /* ---------- Body ---------- */
+  article { padding: 40px 0 30px; }
+  .w-section { margin-bottom: 36px; }
+  .w-section h2 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .w-section h2::before {
+    content: "";
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+  .w-section p { color: var(--text-dim); font-size: 15px; margin-bottom: 12px; text-align: justify;}
+  .w-section ul { padding-left: 20px; color: var(--text-dim); font-size: 15px; text-align: justify;}
+  .w-section li { margin-bottom: 8px; line-height: 1.6; }
+  .w-section li::marker { color: var(--accent); }
+  .w-section strong { color: var(--text-dim); font-weight: 700; margin-bottom: 12px;}
+  .result-tag {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .callout {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 6px;
+    padding: 16px 20px;
+    font-size: 14px;
+    color: var(--text-dim);
+    margin: 16px 0;
+  }
+
+  .callout strong { color: var(--accent);}
+
+  /* Mainly used for the display of the FRAS Main System Image*/
+  .callout1 {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 6px;
+    padding: 16px 20px;
+    font-size: 14px;
+    color: var(--text-dim);
+    margin: 16px 0;
+  }
+
+  .callout1 strong { color: var(--accent); display: block; margin-bottom: 7px;}
+
+  /* Mainly used for the questions (changing to blue color)*/
+  .callout2 { 
+    font-size: 14px;
+    color: var(--text-dim);
+  }
+
+  .callout2 strong { color: var(--accent); display: block;}
+
+    .poc-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin-top: 16px;
+  }
+  .poc-gallery figure {
+    margin: 0;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .poc-gallery img {
+    width: 100%;
+    display: block;
+    border-bottom: 1px solid var(--border);
+  }
+  .poc-gallery figcaption {
+    padding: 10px 12px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+    .poc-gallery img:hover { opacity: 0.85; }
+ 
+  .lightbox {
+    position: fixed;
+    inset: 0;
+    background: rgba(13, 17, 23, 0.92);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .2s ease, visibility .2s;
+  }
+  .lightbox.open { opacity: 1; visibility: visible; }
+  .lightbox img {
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    cursor: zoom-out;
+  }
+  .lightbox-close {
+    position: absolute;
+    top: 20px;
+    right: 24px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .lightbox-close:hover { border-color: var(--accent); color: var(--accent); }
+  .lightbox-caption {
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text-dim);
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 16px;
+    max-width: 80%;
+    text-align: center;
+  }
+  .poc-gallery figcaption {
+    padding: 10px 12px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+  .result-tag {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .impact-stat {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin: 18px 0 6px;
+  }
+  .impact-stat-item {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    flex: 1;
+    min-width: 160px;
+  }
+  .impact-stat-item .num {
+    font-family: var(--mono);
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--accent);
+    display: block;
+    margin-bottom: 4px;
+  }
+  .impact-stat-item .label {
+    font-size: 12.5px;
+    color: var(--text-dim);
+  }
+
+  footer.page-footer {
+    border-top: 1px solid var(--border);
+    padding: 30px 0 50px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  footer.page-footer .back-link { font-size: 13px; }
+  footer.page-footer .site-name { font-family: var(--mono); font-size: 12px; color: var(--text-dim); }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+  }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="nav-inner">
+    <a class="back-link" href="../index.html#projects">Back to portfolio</a>
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="navLinks">
+      <span></span><span></span><span></span>
+    </button>
+    <nav class="nav-links" id="navLinks">
+      <a href="../index.html#home">Home</a>
+      <a href="../index.html#about">About</a>
+      <a href="../index.html#skills">Skills</a>
+      <a href="../index.html#projects">Projects</a>
+      <a href="../index.html#certifications">Certifications</a>
+      <a href="../index.html#experience">Experience</a>
+      <a href="../index.html#education">Education</a>
+      <a href="../index.html#contact">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="writeup-header">
+    <div class="writeup-eyebrow">AI Project</div>
+    <h1 class="writeup-title">AI-Powered Facial Recognition Attendance System (FRAS)</h1>
+    <div class="writeup-meta">
+      <span><strong>Type:</strong> Python / AI &amp; ML</span>
+      <span><strong>Testing:</strong> 20+ facial images</span>
+      <span><strong>Accuracy:</strong> 95%+</span>
+    </div>
+    <div class="tools-row">
+      <span class="tools-label">Tools:</span>
+      <div class="stack-tags">
+        <span>Pycharm</span>
+        <span>Python</span>
+        <span>Facial Recognition</span>
+        <span>CNN</span>
+        <span>MySQL</span>
+        <span>Skill Building</span>
+      </div>
+    </div>
+  </div>
+
+  <article>
+
+    <div class="w-section">
+      <h2>Overview</h2>
+      <p>
+        For my final-year project in my Cybersecurity degree program, I developed a real-time facial recognition attendance system (FRAS) using AI and 
+        machine learning which automates attendance logging by identifying individuals live via webcam input rather than relying on manual sign-in.
+      </p>
+      <p>
+        This writeup covers the system's design, key technical decisions, the testing process
+        used to validate accuracy and inclusivity, and the documentation created to support
+        long-term maintainability.
+      </p>
+    </div>
+
+    <div class="w-section">
+      <h2>System Design</h2>
+      <div class="callout1">
+        <strong> Main FRAS System:</strong> 
+        <img src="../images/System Design.png" alt="Screenshot of the Main FRAS System" width="670" height="500">
+      </div>
+      <ul>
+        <li>Developed the Facial Registration System (FRS) for the main Facial Recognition Attendance System (FRAS), allowing users to register their facial profiles before accessing the attendance platform.</li>
+        <li>Developed a facial recognition attendance system (FRAS) using Python Programming and Machine Learning, achieving 95%+ accuracy in face detection.</li>
+        <li>Built using OpenCV for real-time face detection and a Convolutional Neural Network (CNN) model for facial recognition and classification.</li>
+        <li>Programmed backend functionality using Python programming, enabling fully automated attendance data logging to a MySQL database.</li>
+      </ul>
+    </div>
+
+    <div class="w-section">
+      <h2>Technical Decisions &amp; Challenges</h2>
+      <div class="callout2">
+        <strong>Why did I choose CNN-based model for the FRAS?</strong>
+      </div>
+      <ul>
+         <li>Enables well-suited to image classification tasks, capable of learning distinguishing facial features like eye distance, jawline structure, and nose shape directly from pixel data.</li>
+         <li>Used the <b><code>face_recognition</code></b> library (built on <b><code>dlib</code></b>), which applies a pre-trained deep CNN model to generate 128-dimensional facial embeddings for each detected face.</li>
+         <li>Compared these embeddings using distance metrics to determine a match between a live capture and a registered face.</li>
+         <li>Offers stronger accuracy and better generalization across varied lighting conditions and angles, compared to simpler methods like Haar cascades.</li>
+      </ul>
+      <div class="callout">
+        <strong>Challenge:</strong> Due to the hardware limitations of my laptop, the FRAS camera interface experiences some lag, as the CPU lacks the processing power required for real-time facial recognition.
+      </div>
+    </div>
+
+    <div class="w-section">
+      <h2>Testing &amp; Validation</h2>
+      <p>
+        Tested the system across 20+ diverse facial images to validate accuracy and ensure the
+        model performed reliably across different faces, rather than being biased toward a
+        narrow dataset.
+      </p>
+      <div class="callout">
+        <strong>Result:</strong> The system achieved 95%+ accuracy in face detection across the test set, while maintaining consistent performance across a diverse range of facial images.
+      </div>
+    </div>
+
+    <div class="w-section">
+      <h2>Impact</h2>
+      <div class="impact-stat">
+        <div class="impact-stat-item">
+          <span class="num">95%+</span>
+          <span class="label">Face detection accuracy</span>
+        </div>
+        <div class="impact-stat-item">
+          <span class="num">20+</span>
+          <span class="label">Diverse facial images tested</span>
+        </div>
+        <div class="impact-stat-item">
+          <span class="num">100%</span>
+          <span class="label">Automated attendance logging</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="w-section">
+      <h2>Proof Of Concept (POC)</h2>
+      <p>
+        Screenshots of the system running, showing live detection and automated attendance logging.
+      </p>
+      <div class="poc-gallery">
+        <figure>
+          <img src="../images/fras-poc-1.png" alt="TESTING - DATABASE RETRIEVAL TO UI INTERFACE">
+          <figcaption>FRAS Live face detection via webcam</figcaption>
+        </figure>
+        <figure>
+          <img src="../images/fras-poc-2.png" alt="TESTING - FRAS INTERFACE 'MARKED' ">
+          <figcaption>FRAS interface change 'Marked'</figcaption>
+        </figure>
+        <figure>
+          <img src="../images/fras-poc-3.png" alt="TESTING - FRAS INTERFACE 'ALREADY MARKED' ">
+          <figcaption>FRAS interface change 'Already Marked'</figcaption>
+        </figure>
+        <figure>
+          <img src="../images/fras-poc-4.png" alt="TESTING – FACIAL RECOGNITION SPEED">
+          <figcaption>FRAS Facial Recognition Speed</figcaption>
+        </figure>
+        <figure>
+          <img src="../images/fras-poc-5.png" alt="TESTING - ATTENDANCE RECORDS TERMINAL & MYSQL ">
+          <figcaption>FRAS attendance record terminal in MySQL</figcaption>
+        </figure>
+        <figure>
+          <img src="../images/fras-poc-6.png" alt="TESTING - STATISTICS FOR FACE RECOGNITION ">
+          <figcaption>FRAS attendance recognition statistics</figcaption>
+        </figure>
+      </div>
+    </div> 
+
+    <div class="w-section">
+      <h2>Lessons Learned</h2>
+      <p>
+        This project taught me that a model's theoretical accuracy doesn't always translate to smooth real-world performance even with 95%+ 
+        detection accuracy, the CNN's processing demands exposed a genuine hardware bottleneck on lower-spec machines. 
+      </p>
+    </div>
+
+  </article>
+
+  <footer class="page-footer">
+    <a class="back-link" href="../index.html#projects">Back to portfolio</a>
+    <span class="site-name">swetha0175.github.io</span>
+  </footer>
+</div>
+
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" id="lightboxClose" aria-label="Close image">✕</button>
+  <img id="lightboxImg" src="" alt="">
+  <div class="lightbox-caption" id="lightboxCaption"></div>
+</div>
+ 
+
+<script>
+  const navToggle = document.getElementById('navToggle');
+  const navLinks = document.getElementById('navLinks');
+ 
+  function closeMenu() {
+    navToggle.classList.remove('open');
+    navLinks.classList.remove('open');
+    navToggle.setAttribute('aria-expanded', 'false');
+  }
+ 
+  navToggle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isOpen = navLinks.classList.toggle('open');
+    navToggle.classList.toggle('open', isOpen);
+    navToggle.setAttribute('aria-expanded', String(isOpen));
+  });
+ 
+  navLinks.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', closeMenu);
+  });
+ 
+  document.addEventListener('click', (e) => {
+    if (!navLinks.contains(e.target) && !navToggle.contains(e.target)) {
+      closeMenu();
+    }
+  });
+ 
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeMenu();
+      closeLightbox();
+    }
+  });
+ 
+  // Lightbox for POC gallery images
+  const lightbox = document.getElementById('lightbox');
+  const lightboxImg = document.getElementById('lightboxImg');
+  const lightboxCaption = document.getElementById('lightboxCaption');
+  const lightboxClose = document.getElementById('lightboxClose');
+ 
+  function openLightbox(src, alt, caption) {
+    lightboxImg.src = src;
+    lightboxImg.alt = alt;
+    lightboxCaption.textContent = caption || '';
+    lightbox.classList.add('open');
+  }
+ 
+  function closeLightbox() {
+    lightbox.classList.remove('open');
+  }
+ 
+  document.querySelectorAll('.poc-gallery figure').forEach(figure => {
+    const img = figure.querySelector('img');
+    const caption = figure.querySelector('figcaption');
+    figure.style.cursor = 'zoom-in';
+    figure.addEventListener('click', () => {
+      openLightbox(img.src, img.alt, caption ? caption.textContent : '');
+    });
+  });
+ 
+  lightboxClose.addEventListener('click', closeLightbox);
+  lightbox.addEventListener('click', (e) => {
+    if (e.target === lightbox) closeLightbox();
+  });
+</script>
+</body>
+</html>
