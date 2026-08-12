@@ -50,7 +50,7 @@
     margin: 0 auto;
     padding: 0 24px;
   }
-  
+
   /* ---------- Nav ---------- */
   header.nav {
     position: fixed;
@@ -352,6 +352,7 @@
     gap: 8px;
   }
   .project-group-label.primary { color: var(--accent); }
+  .project-group-label.redteam { color: var(--red); }
   .project-group-label.secondary { color: var(--text-dim); }
   .project-group-label:first-of-type { margin-top: 0; }
   .project-card {
@@ -644,7 +645,7 @@
     <div class="section-label">ls ./projects</div>
     <h2 class="section-title">Projects &amp; Writeups</h2>
     <!-- Group 1: Security-focused projects — leads first, blue accent label -->
-    <div class="project-group-label primary">Cybersecurity</div>
+    <div class="project-group-label primary">Cybersecurity - Blue Team</div>
 
         <div class="project-card">
       <div class="project-head">
@@ -686,7 +687,23 @@
       <div class="project-link"><a href="writeups/soar_automation_dev.html" target="_blank" rel="noopener noreferrer">→ Read the writeup</a></div>
     </div>
 
-    <!-- Group 2: Supporting technical/dev projects — secondary, grey label -->
+    <!-- Group 2: Technical Red Teaming Projects -->
+    <div class="project-group-label redteam"> Cybersecurity - Red Team</div>
+    <div class="project-card">
+      <div class="project-head">
+        <div class="project-title">Penetration Testing &amp; Vulnerability Assessment</div>
+        <div class="project-severity sev-high">Critical</div>
+      </div>
+      <p class="project-desc">
+        Conducted a full penetration test against a simulated organization's network, from
+        reconnaissance and threat modeling through exploitation, achieving full root
+        compromise and delivering a prioritized remediation plan.
+      </p>
+      <div class="project-stack"><span>Kali Linux</span><span>Nmap</span><span>Metasploit</span><span>OpenVAS</span></div>
+      <div class="project-link"><a href="writeups/pentest-report.html" target="_blank" rel="noopener noreferrer">→ Read the writeup</a></div>
+    </div>
+
+    <!-- Group 3: Supporting technical/dev projects — secondary, grey label -->
     <div class="project-group-label secondary">Technical Projects — Python &amp; AI/ML</div>
     <div class="project-card">
       <div class="project-head">
@@ -700,7 +717,33 @@
       <div class="project-stack"><span>Python</span><span>SQL</span><span>Pycharm</span><span>OpenCV</span><span>Facial Recognition</span></div>
       <div class="project-link"><a href="writeups/facial_recognition_attendance_system.html" target="_blank" rel="noopener noreferrer">→ Full writeup</a></div>
     </div>
-    
+
+    <div class="project-card">
+      <div class="project-head">
+        <div class="project-title">Hotel Management Data Analysis</div>
+        <div class="project-severity sev-info">Scripting</div>
+      </div>
+      <p class="project-desc">
+        Built a Python-based hotel management system enabling users to book and cancel room nights. Used Seaborn, Matplotlib, and other libraries 
+        to analyze booking data and generate visual reports.
+      </p>
+      <div class="project-stack"><span>Python</span><span>Jupyter Notebook</span><span>Seaborn</span><span>Matplotlib</span><span>Pandas</span></div>
+      <div class="project-link"><a href="writeups/hotel_management_data_analysis.html" target="_blank" rel="noopener noreferrer">→ Full writeup</a></div>
+    </div>
+
+        <div class="project-card">
+      <div class="project-head">
+        <div class="project-title">Responsive Front-End Travel Booking Website</div>
+        <div class="project-severity sev-info">Frontend Development</div>
+      </div>
+      <p class="project-desc">
+        Designed a travel booking website using HTML, CSS, and JavaScript to showcase holiday packages. Included a contact page allowing users to
+        reach a booking agent directly for further inquiries.
+      </p>
+      <div class="project-stack"><span>HTML</span><span>CSS</span><span>JavaScript</span></div>
+      <div class="project-link"><a href="writeups/sg_travels.html" target="_blank" rel="noopener noreferrer">→ Full writeup</a></div>
+    </div>
+  </div>
 </section>
 
 <section id="certifications">
